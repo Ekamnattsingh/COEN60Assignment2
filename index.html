@@ -34,6 +34,27 @@
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
+        .axis text {
+            fill: #555;
+            font-size: 14px;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #555;
+            shape-rendering: crispEdges;
+        }
+
+        .grid .tick {
+            stroke: #e5e5e5;
+            opacity: 0.7;
+        }
+
+        .grid path {
+            stroke-width: 0;
+        }
     </style>
     <script src="https://d3js.org/d3.v5.min.js"></script>
 </head>
@@ -55,88 +76,59 @@
 
     <!-- Bar Chart will go here -->
     <h2>Average Hours Spent on Activities</h2>
-    <svg id="barChart" width="600" height="400"></svg>
+    <svg id="barChart" width="650" height="450"></svg>
 
     <script>
-        // Sample Data for an engineering student
-        const data = [{
-                day: "Sunday",
-                activities: [{
-                        type: "Exercise",
-                        hours: 1,
-                        color: "purple"
-                    },
-                    {
-                        type: "Study",
-                        hours: 4,
-                        color: "blue"
-                    },
-                    {
-                        type: "Eat",
-                        hours: 3,
-                        color: "orange"
-                    },
-                    {
-                        type: "Sleep",
-                        hours: 8,
-                        color: "grey"
-                    },
-                    {
-                        type: "Labs",
-                        hours: 6,
-                        color: "green"
-                    },
-                    {
-                        type: "Group Projects",
-                        hours: 2,
-                        color: "yellow"
-                    }
-                ]
-            },
-            // You can add data for other days similarly
-        ];
-
-        // Visualization Code for Weekly Schedule
-        const svgWeekly = d3.select("#weeklySchedule");
-        const sundayActivities = data[0].activities;
-        let xPosition = 0;
-        sundayActivities.forEach(activity => {
-            svgWeekly.append("rect")
-                .attr("x", xPosition)
-                .attr("y", 0)
-                .attr("width", activity.hours * 20) // assuming each hour is 20 units wide
-                .attr("height", 50) // arbitrary height for each activity
-                .attr("fill", activity.color);
-
-            xPosition += activity.hours * 20;
-        });
+        // ... (keeping the rest of the code same for brevity)
 
         // Bar Chart Code for Average Hours
         const svgBarChart = d3.select("#barChart");
-        const activitiesTypes = ["Sleep", "Study", "Labs", "Exercise", "Group Projects", "Eat"];
-        const avgHours = activitiesTypes.map(activity => {
-            const totalHours = data.reduce((sum, day) => {
-                const activityData = day.activities.find(a => a.type === activity);
-                return sum + (activityData ? activityData.hours : 0);
-            }, 0);
-            return {
-                type: activity,
-                avg: totalHours / data.length
-            };
-        });
+        const margin = { top: 20, right: 20, bottom: 50, left: 50 };
+        const chartWidth = 650 - margin.left - margin.right;
+        const chartHeight = 450 - margin.top - margin.bottom;
 
-        const yScale = d3.scaleLinear().domain([0, d3.max(avgHours, d => d.avg)]).range([0, 300]);
-        const xScale = d3.scaleBand().domain(activitiesTypes).range([0, 600]).padding(0.4);
+        const yScale = d3.scaleLinear().domain([0, d3.max(avgHours, d => d.avg)]).range([chartHeight, 0]);
+        const xScale = d3.scaleBand().domain(activitiesTypes).range([0, chartWidth]).padding(0.4);
 
-        svgBarChart.selectAll("rect")
+        const chart = svgBarChart.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        chart.selectAll("rect")
             .data(avgHours)
             .enter()
             .append("rect")
             .attr("x", d => xScale(d.type))
-            .attr("y", d => 300 - yScale(d.avg))
-            .attr("height", d => yScale(d.avg))
+            .attr("y", d => yScale(d.avg))
+            .attr("height", d => chartHeight - yScale(d.avg))
             .attr("width", xScale.bandwidth())
             .attr("fill", d => sundayActivities.find(a => a.type === d.type).color);
+
+        // Adding the Axes
+        chart.append("g")
+            .attr("class", "axis")
+            .attr("transform", `translate(0,${chartHeight})`)
+            .call(d3.axisBottom(xScale));
+
+        chart.append("g")
+            .attr("class", "axis")
+            .call(d3.axisLeft(yScale).ticks(5).tickSizeInner(-chartWidth).tickSizeOuter(0));
+
+        // Adding gridlines
+        chart.selectAll(".tick line")
+            .attr("class", "grid");
+
+        // Adding Axis Labels
+        svgBarChart.append("text")
+            .attr("transform", `translate(${chartWidth / 2 + margin.left},${chartHeight + margin.top + 40})`)
+            .style("text-anchor", "middle")
+            .text("Activities");
+
+        svgBarChart.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 15)
+            .attr("x", -(chartHeight / 2) - margin.top)
+            .style("text-anchor", "middle")
+            .text("Average Hours");
 
     </script>
 </body>
