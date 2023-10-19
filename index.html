@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Weekly Schedule</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        #categories {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        #categories p {
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            width: 13%;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        svg {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<body>
+    <!-- Categories Section -->
+    <div id="categories">
+        <p style="background-color: grey;">Sleep</p>
+        <p style="background-color: blue;">Study</p>
+        <p style="background-color: green;">Labs</p>
+        <p style="background-color: purple;">Exercise</p>
+        <p style="background-color: yellow;">Group Projects</p>
+        <p style="background-color: orange;">Eat</p>
+    </div>
+
+    <!-- Visualization will go here -->
+    <h2>Weekly Schedule Visualization</h2>
+    <svg id="weeklySchedule" width="600" height="400"></svg>
+
+    <!-- Bar Chart will go here -->
+    <h2>Average Hours Spent on Activities</h2>
+    <svg id="barChart" width="600" height="400"></svg>
+
+    <script>
+        // Sample Data for an engineering student
+        const data = [{
+                day: "Sunday",
+                activities: [{
+                        type: "Exercise",
+                        hours: 1,
+                        color: "purple"
+                    },
+                    {
+                        type: "Study",
+                        hours: 4,
+                        color: "blue"
+                    },
+                    {
+                        type: "Eat",
+                        hours: 3,
+                        color: "orange"
+                    },
+                    {
+                        type: "Sleep",
+                        hours: 8,
+                        color: "grey"
+                    },
+                    {
+                        type: "Labs",
+                        hours: 6,
+                        color: "green"
+                    },
+                    {
+                        type: "Group Projects",
+                        hours: 2,
+                        color: "yellow"
+                    }
+                ]
+            },
+            // You can add data for other days similarly
+        ];
+
+        // Visualization Code for Weekly Schedule
+        const svgWeekly = d3.select("#weeklySchedule");
+        const sundayActivities = data[0].activities;
+        let xPosition = 0;
+        sundayActivities.forEach(activity => {
+            svgWeekly.append("rect")
+                .attr("x", xPosition)
+                .attr("y", 0)
+                .attr("width", activity.hours * 20) // assuming each hour is 20 units wide
+                .attr("height", 50) // arbitrary height for each activity
+                .attr("fill", activity.color);
+
+            xPosition += activity.hours * 20;
+        });
+
+        // Bar Chart Code for Average Hours
+        const svgBarChart = d3.select("#barChart");
+        const activitiesTypes = ["Sleep", "Study", "Labs", "Exercise", "Group Projects", "Eat"];
+        const avgHours = activitiesTypes.map(activity => {
+            const totalHours = data.reduce((sum, day) => {
+                const activityData = day.activities.find(a => a.type === activity);
+                return sum + (activityData ? activityData.hours : 0);
+            }, 0);
+            return {
+                type: activity,
+                avg: totalHours / data.length
+            };
+        });
+
+        const yScale = d3.scaleLinear().domain([0, d3.max(avgHours, d => d.avg)]).range([0, 300]);
+        const xScale = d3.scaleBand().domain(activitiesTypes).range([0, 600]).padding(0.4);
+
+        svgBarChart.selectAll("rect")
+            .data(avgHours)
+            .enter()
+            .append("rect")
+            .attr("x", d => xScale(d.type))
+            .attr("y", d => 300 - yScale(d.avg))
+            .attr("height", d => yScale(d.avg))
+            .attr("width", xScale.bandwidth())
+            .attr("fill", d => sundayActivities.find(a => a.type === d.type).color);
+
+    </script>
+</body>
+
+</html>
